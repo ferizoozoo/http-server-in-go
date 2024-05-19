@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -15,12 +17,25 @@ func main() {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
-	
+
 	conn, err := l.Accept()
 	if err != nil {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
 
-	conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	line, err := bufio.NewReader(conn).ReadString('\r')
+	if err != nil {
+		fmt.Println("Error reading from connection: ", err.Error())
+		os.Exit(1)
+	}
+
+	url := strings.Split(line, " ")[1]
+
+	if url == "/" {
+		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	} else {
+		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+	}
+
 }
