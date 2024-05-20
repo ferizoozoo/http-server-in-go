@@ -39,7 +39,7 @@ func main() {
 		return
 	}
 	if strings.Contains(url, "/echo") {
-		param := strings.Split(url, "/")[1]
+		param := strings.Split(url, "/")[2]
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(param), param)))
 	}
 }
