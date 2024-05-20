@@ -24,7 +24,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	line, err := bufio.NewReader(conn).ReadString('\r')
+	reader := bufio.NewReader(conn)
+
+	line, err := reader.ReadString('\r')
 	if err != nil {
 		fmt.Println("Error reading from connection: ", err.Error())
 		os.Exit(1)
@@ -34,8 +36,10 @@ func main() {
 
 	if url == "/" {
 		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
-	} else {
-		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		return
 	}
-
+	if strings.Contains(url, "/echo") {
+		param := strings.SplitAfterN(url, "/", 1)
+		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(param), param)))
+	}
 }
