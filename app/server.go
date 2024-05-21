@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -37,6 +38,26 @@ func main() {
 	if url == "/" {
 		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 		return
+	}
+
+	if url == "/user-agent" {
+		var userAgent string
+		for {
+			line, _, err := reader.ReadLine()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+
+				fmt.Println("Error reading from connection: ", err.Error())
+				os.Exit(1)
+			}
+
+			if header := strings.Split(string(line), ":"); header[0] == "User-Agent" {
+				userAgent = header[1]
+			}
+		}
+		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
 	}
 
 	if strings.Contains(url, "/echo") {
