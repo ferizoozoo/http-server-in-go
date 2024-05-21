@@ -53,8 +53,8 @@ func main() {
 				os.Exit(1)
 			}
 
-			if header := strings.Split(string(line), ":"); header[0] == "User-Agent" {
-				userAgent = header[1]
+			if header := strings.SplitN(string(line), ":", 2); strings.TrimSpace(header[0]) == "User-Agent" {
+				userAgent = strings.TrimSpace(header[1])
 			}
 		}
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
