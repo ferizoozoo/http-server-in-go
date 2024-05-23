@@ -19,12 +19,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
+	defer l.Close()
 
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+
+		go handleConnection(conn)
+	}
+}
+
+func handleConnection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 
 	line, err := reader.ReadString('\r')
