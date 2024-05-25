@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -75,9 +74,9 @@ func handleConnection(conn net.Conn) {
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
 	}
 
-	if strings.Contains(url, "/files") {
-		filename := strings.Split(url, "/")[1]
-		path := filepath.Join(directory, filename)
+	if strings.HasPrefix(url, "/files/") {
+		filename := url[7:]
+		path := directory + "/" + filename
 		if _, err := os.Stat(path); err == nil {
 			data, err := os.ReadFile(path)
 			if err != nil {
