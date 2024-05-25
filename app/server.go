@@ -287,9 +287,9 @@ func handleConnection(conn net.Conn) {
 			Message: "OK",
 			Headers: map[string]string{
 				"Content-Type":   "text/plain",
-				"Content-Length": strconv.Itoa(len(req.Routes[1])),
+				"Content-Length": strconv.Itoa(len(req.Routes[2])),
 			},
-			Body: req.Routes[1],
+			Body: req.Routes[2],
 		}
 	default:
 		resp = Response{
