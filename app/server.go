@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -103,15 +102,24 @@ func handleConnection(conn net.Conn) {
 			filename := strings.Split(path, "/")[2]
 			filePath := directory + "/" + filename
 
-			body := make([]byte, 200)
-			_, err = io.ReadFull(reader, body)
-			if err != nil {
-				fmt.Println("Error reading body:", err.Error())
-				conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
-				return
+			body := &strings.Builder{}
+			buffer := make([]byte, 1024)
+			for {
+				n, err := reader.Read(buffer)
+				if err != nil && err != io.EOF {
+					fmt.Println("Error reading body:", err.Error())
+					conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
+					return
+				}
+				if n == 0 {
+					break
+				}
+				body.Write(buffer[:n])
+				if err == io.EOF {
+					break
+				}
 			}
 
-			// Process the body (e.g., write to a file)
 			file, err := os.Create(filePath)
 			if err != nil {
 				conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
@@ -119,9 +127,7 @@ func handleConnection(conn net.Conn) {
 			}
 			defer file.Close()
 
-			body = bytes.Split(body, []byte("\r\n\r\n"))[0]
-
-			_, err = file.Write(body)
+			_, err = file.WriteString(body.String())
 			if err != nil {
 				conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
 				return
@@ -129,7 +135,6 @@ func handleConnection(conn net.Conn) {
 
 			// Send a response
 			conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
-			return
 		}
 
 		conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
