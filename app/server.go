@@ -76,7 +76,7 @@ func handleConnection(conn net.Conn) {
 	if strings.Contains(url, "/files") {
 		filename := strings.Split(url, "/")[2]
 		filePath := directory + "/" + filename
-		if _, err := os.Stat(filePath); err != nil {
+		if _, err := os.Stat(filePath); err == nil {
 			data, err := os.ReadFile(filePath)
 			if err != nil {
 				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(err.Error()), err.Error())))
