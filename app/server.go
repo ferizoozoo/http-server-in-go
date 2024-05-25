@@ -103,7 +103,7 @@ func handleConnection(conn net.Conn) {
 			filename := strings.Split(path, "/")[2]
 			filePath := directory + "/" + filename
 
-			body := make([]byte, 20)
+			body := make([]byte, 200)
 			_, err = io.ReadFull(reader, body)
 			if err != nil {
 				fmt.Println("Error reading body:", err.Error())
