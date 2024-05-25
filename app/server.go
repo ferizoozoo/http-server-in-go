@@ -215,6 +215,7 @@ func handleConnection(conn net.Conn) {
 						"Content-Type":   "application/octet-stream",
 						"Content-Length": strconv.Itoa(len(data)),
 					},
+					Body: string(data),
 				}
 			}
 		} else if req.Method == "POST" {
