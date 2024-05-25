@@ -188,7 +188,7 @@ func handleConnection(conn net.Conn) {
 			Body: req.Headers["User-Agent"],
 		}
 	case strings.Contains(req.Url, "/files"):
-		filename := req.Routes[0]
+		filename := req.Routes[2]
 		filePath := server.rootDir + "/" + filename
 
 		if req.Method == "GET" {
