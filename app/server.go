@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -75,15 +76,15 @@ func handleConnection(conn net.Conn) {
 
 	if strings.Contains(url, "/files") {
 		filename := strings.Split(url, "/")[2]
-		filePath := directory + "/" + filename
-		if _, err := os.Stat(filePath); err == nil {
-			data, err := os.ReadFile(filePath)
+		path := filepath.Join(directory, filename)
+		if _, err := os.Stat(path); err == nil {
+			data, err := os.ReadFile(path)
 			if err != nil {
 				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(err.Error()), err.Error())))
 				return
 			}
 
-			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(data), string(data))))
+			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", len(data), string(data))))
 			return
 		}
 	}
