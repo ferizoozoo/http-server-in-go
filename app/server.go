@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -101,10 +102,10 @@ func handleConnection(conn net.Conn) {
 		} else if method == "POST" {
 			filename := strings.Split(path, "/")[2]
 			filePath := directory + "/" + filename
-			var body []byte
-			crlfCount := 0
+			body := make([]byte, 1024)
+
 			for {
-				line, _, err := reader.ReadLine()
+				_, err := reader.Read(body)
 				if err != nil {
 					if err == io.EOF {
 						break
@@ -114,13 +115,8 @@ func handleConnection(conn net.Conn) {
 					os.Exit(1)
 				}
 
-				if strings.Contains(string(line), "\r\n") {
-					crlfCount++
-				}
-
-				if crlfCount == 2 {
-					body = append(body, line...)
-					break
+				if strings.Contains(string(body), "\r\n\r\n") {
+					body = bytes.Split(body, []byte("\r\n\r\n"))[1]
 				}
 			}
 
