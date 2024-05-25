@@ -75,7 +75,7 @@ func handleConnection(conn net.Conn) {
 	}
 
 	if strings.Contains(url, "/files") {
-		filename := strings.Split(url, "/")[2]
+		filename := strings.Split(url, "/")[1]
 		path := filepath.Join(directory, filename)
 		if _, err := os.Stat(path); err == nil {
 			data, err := os.ReadFile(path)
