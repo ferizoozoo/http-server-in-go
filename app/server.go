@@ -197,8 +197,8 @@ func handleConnection(conn net.Conn) {
 				if err != nil {
 					resp = Response{
 						Version: "HTTP/1.1",
-						Status:  "404",
-						Message: "Not Found",
+						Status:  "500",
+						Message: "Internal Server Error",
 						Headers: map[string]string{
 							"Content-Type": "text/plain",
 						},
@@ -216,7 +216,18 @@ func handleConnection(conn net.Conn) {
 					},
 					Body: string(data),
 				}
+				break
 			}
+			resp = Response{
+				Version: "HTTP/1.1",
+				Status:  "404",
+				Message: "Not Found",
+				Headers: map[string]string{
+					"Content-Type": "text/plain",
+				},
+				Body: err.Error(),
+			}
+
 		} else if req.Method == "POST" {
 			file, err := os.Create(filePath)
 
