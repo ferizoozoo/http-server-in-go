@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -9,8 +10,11 @@ import (
 	"strings"
 )
 
+var directory string
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
+	flag.StringVar(&directory, "directory", "app", "directory to serve static files from")
 	fmt.Println("Logs from your program will appear here!")
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
@@ -71,8 +75,9 @@ func handleConnection(conn net.Conn) {
 
 	if strings.Contains(url, "/files") {
 		filename := strings.Split(url, "/")[2]
-		if _, err := os.Stat(filename); err != nil {
-			data, err := os.ReadFile(filename)
+		filePath := directory + "/" + filename
+		if _, err := os.Stat(filePath); err != nil {
+			data, err := os.ReadFile(filePath)
 			if err != nil {
 				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(err.Error()), err.Error())))
 				return
