@@ -139,6 +139,7 @@ func handleConnection(conn net.Conn) {
 			}
 
 			conn.Write([]byte("HTTP/1.1 201 OK\r\n\r\n"))
+			return
 		}
 	}
 
