@@ -90,22 +90,18 @@ func ParseRequest(reader io.Reader) (*Request, error) {
 	}
 
 	// read body
-	body := &strings.Builder{}
-
-	for {
-		line, err := bufreader.ReadString('\n')
-		if err != nil && err != io.EOF {
+	if contentLength, ok := request.Headers["Content-Length"]; ok {
+		length, err := strconv.Atoi(contentLength)
+		if err != nil {
 			return nil, err
 		}
-
-		line = strings.Trim(line, "\r\n")
-		body.WriteString(line)
-		if err == io.EOF {
-			break
+		body := make([]byte, length)
+		_, err = io.ReadFull(bufreader, body)
+		if err != nil {
+			return nil, err
 		}
+		request.Body = string(body)
 	}
-
-	request.Body = body.String()
 
 	return request, nil
 }
@@ -119,13 +115,16 @@ type Response struct {
 }
 
 func (res *Response) Write(conn net.Conn) error {
+	writer := bufio.NewWriter(conn)
+	defer writer.Flush()
+
 	h := strings.Builder{}
 
 	for key, value := range res.Headers {
 		h.Write([]byte(fmt.Sprintf("%s: %s\r\n", key, value)))
 	}
 
-	_, err := conn.Write([]byte(fmt.Sprintf("%s %s %s\r\n%s\r\n%s", res.Version, res.Status, res.Message, h.String(), res.Body)))
+	_, err := writer.Write([]byte(fmt.Sprintf("%s %s %s\r\n%s\r\n%s", res.Version, res.Status, res.Message, h.String(), res.Body)))
 	return err
 }
 
@@ -147,9 +146,10 @@ func main() {
 
 	for {
 		conn, err := l.Accept()
+
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
+			continue
 		}
 
 		go handleConnection(conn)
@@ -204,6 +204,7 @@ func handleConnection(conn net.Conn) {
 						},
 						Body: err.Error(),
 					}
+					break
 				}
 
 				resp = Response{
@@ -218,6 +219,7 @@ func handleConnection(conn net.Conn) {
 			}
 		} else if req.Method == "POST" {
 			file, err := os.Create(filePath)
+
 			if err != nil {
 				resp = Response{
 					Version: "HTTP/1.1",
@@ -228,8 +230,10 @@ func handleConnection(conn net.Conn) {
 					},
 					Body: err.Error(),
 				}
-
+				break
 			}
+
+			defer file.Close()
 
 			_, err = file.Write([]byte(req.Body))
 			if err != nil {
@@ -242,6 +246,7 @@ func handleConnection(conn net.Conn) {
 					},
 					Body: err.Error(),
 				}
+				break
 			}
 
 			resp = Response{
@@ -264,6 +269,7 @@ func handleConnection(conn net.Conn) {
 				},
 				Body: "No route specified",
 			}
+			break
 		}
 		resp = Response{
 			Version: "HTTP/1.1",
@@ -288,5 +294,8 @@ func handleConnection(conn net.Conn) {
 
 	}
 
-	resp.Write(conn)
+	err = resp.Write(conn)
+	if err != nil {
+		fmt.Println("Error writing response: ", err.Error())
+	}
 }
