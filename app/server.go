@@ -225,7 +225,6 @@ func handleConnection(conn net.Conn) {
 				Headers: map[string]string{
 					"Content-Type": "text/plain",
 				},
-				Body: err.Error(),
 			}
 
 		} else if req.Method == "POST" {
