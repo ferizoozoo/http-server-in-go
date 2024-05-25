@@ -102,41 +102,56 @@ func handleConnection(conn net.Conn) {
 		} else if method == "POST" {
 			filename := strings.Split(path, "/")[2]
 			filePath := directory + "/" + filename
+
+			var buffer bytes.Buffer
 			body := make([]byte, 1024)
+			headerEnded := false
 
 			for {
-				_, err := reader.Read(body)
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-
-					fmt.Println("Error reading from connection: ", err.Error())
-					os.Exit(1)
+				n, err := reader.Read(body)
+				if err != nil && err != io.EOF {
+					fmt.Println("Error reading from connection:", err.Error())
+					conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
+					return
 				}
 
-				if strings.Contains(string(body), "\r\n\r\n") {
-					body = bytes.Split(body, []byte("\r\n\r\n"))[1]
+				if n > 0 {
+					buffer.Write(body[:n])
+				}
+
+				if !headerEnded {
+					content := buffer.Bytes()
+					index := bytes.Index(content, []byte("\r\n\r\n"))
+					if index != -1 {
+						headerEnded = true
+						buffer.Reset()
+						buffer.Write(content[index+4:])
+					}
+				}
+
+				if err == io.EOF {
+					break
 				}
 			}
 
 			file, err := os.Create(filePath)
 			if err != nil {
-				conn.Write([]byte("HTTP/1.1 400 OK\r\n\r\n"))
+				conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
 				return
 			}
 			defer file.Close()
 
-			// Write data to the file
-			_, err = file.Write(body)
+			_, err = file.Write(buffer.Bytes())
 			if err != nil {
-				conn.Write([]byte("HTTP/1.1 400 OK\r\n\r\n"))
+				conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
 				return
 			}
 
-			conn.Write([]byte("HTTP/1.1 201 OK\r\n\r\n"))
+			conn.Write([]byte("HTTP/1.1 201 Created\r\n\r\n"))
 			return
 		}
+
+		conn.Write([]byte("HTTP/1.1 405 Method Not Allowed\r\n\r\n"))
 	}
 
 	if strings.Contains(path, "/echo") {
