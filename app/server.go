@@ -74,8 +74,8 @@ func handleConnection(conn net.Conn) {
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
 	}
 
-	if strings.HasPrefix(url, "/files/") {
-		filename := url[7:]
+	if strings.Contains(url, "/files") {
+		filename := strings.Split(url, "/")[2]
 		path := directory + "/" + filename
 		if _, err := os.Stat(path); err == nil {
 			data, err := os.ReadFile(path)
