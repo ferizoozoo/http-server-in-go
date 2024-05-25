@@ -84,6 +84,7 @@ func handleConnection(conn net.Conn) {
 			}
 
 			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(data), string(data))))
+			return
 		}
 	}
 
