@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -102,7 +103,7 @@ func handleConnection(conn net.Conn) {
 			filename := strings.Split(path, "/")[2]
 			filePath := directory + "/" + filename
 
-			body := make([]byte, 1024)
+			body := make([]byte, 20)
 			_, err = io.ReadFull(reader, body)
 			if err != nil {
 				fmt.Println("Error reading body:", err.Error())
@@ -117,6 +118,8 @@ func handleConnection(conn net.Conn) {
 				return
 			}
 			defer file.Close()
+
+			body = bytes.Split(body, []byte("\r\n\r\n"))[0]
 
 			_, err = file.Write(body)
 			if err != nil {
