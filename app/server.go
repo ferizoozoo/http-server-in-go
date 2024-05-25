@@ -69,6 +69,19 @@ func handleConnection(conn net.Conn) {
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(userAgent), userAgent)))
 	}
 
+	if strings.Contains(url, "/files") {
+		filename := strings.Split(url, "/")[2]
+		if _, err := os.Stat(filename); err != nil {
+			data, err := os.ReadFile(filename)
+			if err != nil {
+				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(err.Error()), err.Error())))
+				return
+			}
+
+			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(data), string(data))))
+		}
+	}
+
 	if strings.Contains(url, "/echo") {
 		param := strings.Split(url, "/")[2]
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(param), param)))
