@@ -11,6 +11,22 @@ import (
 	"strings"
 )
 
+type EncodingTypes []string
+
+var encodings = EncodingTypes{
+	"gzip",
+}
+
+func (e EncodingTypes) Exists(encoding string) bool {
+	for _, v := range e {
+		if v == encoding {
+			return true
+		}
+	}
+
+	return false
+}
+
 // TODO: refactoring using the below todos
 // TODO: create a handler for each route
 // TODO: create option pattern for each handler
@@ -104,6 +120,13 @@ func ParseRequest(reader io.Reader) (*Request, error) {
 	}
 
 	return request, nil
+}
+
+func getEncoding(request *Request) string {
+	if encodings.Exists(request.Headers["Accept-Encoding"]) {
+		return fmt.Sprintf("Accept-Encoding: %s", request.Headers["Accept-Encoding"])
+	}
+	return ""
 }
 
 type Response struct {
@@ -286,8 +309,9 @@ func handleConnection(conn net.Conn) {
 			Status:  "200",
 			Message: "OK",
 			Headers: map[string]string{
-				"Content-Type":   "text/plain",
-				"Content-Length": strconv.Itoa(len(req.Routes[2])),
+				"Content-Type":    "text/plain",
+				"Content-Length":  strconv.Itoa(len(req.Routes[2])),
+				"Accept-Encoding": getEncoding(req),
 			},
 			Body: req.Routes[2],
 		}
