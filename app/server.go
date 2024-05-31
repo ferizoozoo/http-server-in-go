@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
@@ -33,6 +35,8 @@ func (e EncodingTypes) Exists(encoding string) bool {
 // TODO: response for each handler should only receive body, message and status code (the rest should be handled behind the scene)
 // TODO: separate each handler into its own file
 // TODO: separate Request and Response into its own file
+// TODO: compress response body, but as inside the write function of response, or as a separate function?
+// TODO: refactor Response.Write function
 type Server struct {
 	port    string
 	ip      string
@@ -157,8 +161,37 @@ func (res *Response) Write(conn net.Conn) error {
 		h.Write([]byte(fmt.Sprintf("%s: %s\r\n", key, value)))
 	}
 
+	if encoding := res.Headers["Content-Encoding"]; encoding != "" {
+		encodedBody, err := compressBody(res.Body, encoding)
+		if err != nil {
+			return err
+		}
+		res.Body = encodedBody
+	}
+
 	_, err := writer.Write([]byte(fmt.Sprintf("%s %s %s\r\n%s\r\n%s", res.Version, res.Status, res.Message, h.String(), res.Body)))
 	return err
+}
+
+func compressBody(body string, encoding string) (string, error) {
+	var err error
+	var encodedBody string
+	switch encoding {
+	case "gzip":
+		encodedBody, err = gzipEncoding(body)
+	}
+
+	return encodedBody, err
+}
+
+func gzipEncoding(body string) (string, error) {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+
+	defer zw.Close()
+
+	_, err := zw.Write([]byte(body))
+	return buf.String(), err
 }
 
 var server *Server
