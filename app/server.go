@@ -30,6 +30,7 @@ func (e EncodingTypes) Exists(encoding string) bool {
 // TODO: refactoring using the below todos
 // TODO: create a handler for each route
 // TODO: create option pattern for each handler
+// TODO: response for each handler should only receive body, message and status code (the rest should be handled behind the scene)
 type Server struct {
 	port    string
 	ip      string
@@ -124,7 +125,7 @@ func ParseRequest(reader io.Reader) (*Request, error) {
 
 func getEncoding(request *Request) string {
 	if encodings.Exists(request.Headers["Accept-Encoding"]) {
-		return fmt.Sprintf("Accept-Encoding: %s", request.Headers["Accept-Encoding"])
+		return request.Headers["Accept-Encoding"]
 	}
 	return ""
 }
@@ -144,6 +145,9 @@ func (res *Response) Write(conn net.Conn) error {
 	h := strings.Builder{}
 
 	for key, value := range res.Headers {
+		if key == "Content-Encoding" && value == "" {
+			continue
+		}
 		h.Write([]byte(fmt.Sprintf("%s: %s\r\n", key, value)))
 	}
 
@@ -309,9 +313,9 @@ func handleConnection(conn net.Conn) {
 			Status:  "200",
 			Message: "OK",
 			Headers: map[string]string{
-				"Content-Type":    "text/plain",
-				"Content-Length":  strconv.Itoa(len(req.Routes[2])),
-				"Accept-Encoding": getEncoding(req),
+				"Content-Type":     "text/plain",
+				"Content-Length":   strconv.Itoa(len(req.Routes[2])),
+				"Content-Encoding": getEncoding(req),
 			},
 			Body: req.Routes[2],
 		}
