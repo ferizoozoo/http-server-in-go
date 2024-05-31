@@ -160,7 +160,7 @@ func (res *Response) Write(conn net.Conn) error {
 			return err
 		}
 		res.Body = encodedBody
-		res.Headers["Content-Length"] = strconv.Itoa(len(res.Body))
+		res.Headers["Content-Length"] = strconv.Itoa(len(encodedBody))
 	}
 
 	for key, value := range res.Headers {
@@ -189,9 +189,8 @@ func gzipEncoding(body string) (string, error) {
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
 
-	defer zw.Close()
-
 	_, err := zw.Write([]byte(body))
+	zw.Close()
 	return buf.String(), err
 }
 
