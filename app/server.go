@@ -167,6 +167,7 @@ func (res *Response) Write(conn net.Conn) error {
 			return err
 		}
 		res.Body = encodedBody
+		res.Headers["Content-Length"] = string(len(res.Body))
 	}
 
 	_, err := writer.Write([]byte(fmt.Sprintf("%s %s %s\r\n%s\r\n%s", res.Version, res.Status, res.Message, h.String(), res.Body)))
