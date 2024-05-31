@@ -154,20 +154,20 @@ func (res *Response) Write(conn net.Conn) error {
 
 	h := strings.Builder{}
 
-	for key, value := range res.Headers {
-		if key == "Content-Encoding" && value == "" {
-			continue
-		}
-		h.Write([]byte(fmt.Sprintf("%s: %s\r\n", key, value)))
-	}
-
 	if encoding := res.Headers["Content-Encoding"]; encoding != "" {
 		encodedBody, err := compressBody(res.Body, encoding)
 		if err != nil {
 			return err
 		}
 		res.Body = encodedBody
-		res.Headers["Content-Length"] = string(len(res.Body))
+		res.Headers["Content-Length"] = strconv.Itoa(len(res.Body))
+	}
+
+	for key, value := range res.Headers {
+		if key == "Content-Encoding" && value == "" {
+			continue
+		}
+		h.Write([]byte(fmt.Sprintf("%s: %s\r\n", key, value)))
 	}
 
 	_, err := writer.Write([]byte(fmt.Sprintf("%s %s %s\r\n%s\r\n%s", res.Version, res.Status, res.Message, h.String(), res.Body)))
