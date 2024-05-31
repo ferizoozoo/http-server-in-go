@@ -31,6 +31,8 @@ func (e EncodingTypes) Exists(encoding string) bool {
 // TODO: create a handler for each route
 // TODO: create option pattern for each handler
 // TODO: response for each handler should only receive body, message and status code (the rest should be handled behind the scene)
+// TODO: separate each handler into its own file
+// TODO: separate Request and Response into its own file
 type Server struct {
 	port    string
 	ip      string
@@ -124,9 +126,13 @@ func ParseRequest(reader io.Reader) (*Request, error) {
 }
 
 func getEncoding(request *Request) string {
-	if encodings.Exists(request.Headers["Accept-Encoding"]) {
-		return request.Headers["Accept-Encoding"]
+	requestedEncodings := strings.Split(request.Headers["Accept-Encoding"], ",")
+	for _, encoding := range requestedEncodings {
+		if encodings.Exists(encoding) {
+			return encoding
+		}
 	}
+
 	return ""
 }
 
