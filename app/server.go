@@ -128,7 +128,7 @@ func ParseRequest(reader io.Reader) (*Request, error) {
 func getEncoding(request *Request) string {
 	requestedEncodings := strings.Split(request.Headers["Accept-Encoding"], ",")
 	for _, encoding := range requestedEncodings {
-		if encodings.Exists(encoding) {
+		if encodings.Exists(strings.TrimSpace(encoding)) {
 			return encoding
 		}
 	}
